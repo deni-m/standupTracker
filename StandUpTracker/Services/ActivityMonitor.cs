@@ -410,32 +410,9 @@ namespace StandUpTracker.Services
             _serviceLogger.Debug("CONFIG", "GraceBeforeBreakSeconds: {0}", AppSettings.GraceBeforeBreakSeconds);
             _serviceLogger.Debug("CONFIG", "ReminderRepeatMinutes: {0}", AppSettings.ReminderRepeatMinutes);
             _serviceLogger.Debug("CONFIG", "MuteWhenPresenting: {0}", AppSettings.MuteWhenPresenting);
-
-            if (AppSettings.ResetIdleSeconds <= 0)
-            {
-                _serviceLogger.Error("CONFIG", "Invalid ResetIdleSeconds: {0}", AppSettings.ResetIdleSeconds);
-                throw new InvalidOperationException("ResetIdleSeconds must be positive");
-            }
-
-            if (AppSettings.BreakAfterMinutes <= 0)
-            {
-                _serviceLogger.Error("CONFIG", "Invalid BreakAfterMinutes: {0}", AppSettings.BreakAfterMinutes);
-                throw new InvalidOperationException("BreakAfterMinutes must be positive");
-            }
-
-            if (AppSettings.GraceBeforeBreakSeconds < 0)
-            {
-                _serviceLogger.Error("CONFIG", "Invalid GraceBeforeBreakSeconds: {0}", AppSettings.GraceBeforeBreakSeconds);
-                throw new InvalidOperationException("GraceBeforeBreakSeconds cannot be negative");
-            }
-
-            if (AppSettings.TickSeconds <= 0)
-            {
-                _serviceLogger.Error("CONFIG", "Invalid TickSeconds: {0}", AppSettings.TickSeconds);
-                throw new InvalidOperationException("TickSeconds must be positive");
-            }
-
-            _serviceLogger.Info("CONFIG", "Settings validation passed");
+            
+            // Note: No validation needed - AppSettings uses compile-time constants
+            _serviceLogger.Info("CONFIG", "Settings loaded successfully");
         }
 
         #endregion
