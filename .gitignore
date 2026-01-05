@@ -96,3 +96,4 @@ $RECYCLE.BIN/
 
 # Local app data (logs created by the app)
 # Note: actual logs are in %LOCALAPPDATA%\StandUpTracker
+/ReportGenerator/__pycache__

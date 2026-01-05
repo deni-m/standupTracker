@@ -7,7 +7,7 @@ namespace StandUpTracker.Services
 {
     public sealed class IdleTracker : IDisposable
     {
-        // volatile — щоб читання з таймера бачили актуальний стан після подій SystemEvents
+        // volatile — so timer reads see the actual state after SystemEvents
         private volatile bool _isLocked;
         public bool IsLocked => _isLocked;
 
@@ -25,9 +25,9 @@ namespace StandUpTracker.Services
             if (!GetLastInputInfo(ref lii))
                 return 0;
 
-            // 64-бітні тики — без переповнення кожні ~49 днів
+            // 64-bit ticks — no overflow every ~49 days
             ulong tick = GetTickCount64();
-            ulong last = lii.dwTime; // DWORD, але різниця з 64-бітними тиками коректна семантично
+            ulong last = lii.dwTime; // DWORD, but difference with 64-bit ticks is semantically correct
             ulong idleMs = tick - last;
 
             return (int)(idleMs / 1000UL);
@@ -37,7 +37,7 @@ namespace StandUpTracker.Services
         {
             switch (e.Reason)
             {
-                // Трактуємо як "заблоковано/перерва"
+                // Treat as "locked/break"
                 case SessionSwitchReason.SessionLock:
                 case SessionSwitchReason.SessionLogoff:
                 case SessionSwitchReason.ConsoleDisconnect:
@@ -45,7 +45,7 @@ namespace StandUpTracker.Services
                     _isLocked = true;
                     break;
 
-                // Трактуємо як "розблоковано/повернувся"
+                // Treat as "unlocked/returned"
                 case SessionSwitchReason.SessionUnlock:
                 case SessionSwitchReason.SessionLogon:
                 case SessionSwitchReason.ConsoleConnect:
@@ -55,7 +55,7 @@ namespace StandUpTracker.Services
                     break;
 
                 default:
-                    // інші події ігноруємо
+                    // ignore other events
                     break;
             }
         }

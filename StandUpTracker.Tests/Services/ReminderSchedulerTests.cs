@@ -70,22 +70,22 @@ public class ReminderSchedulerTests
     }
 
     [Fact]
-    public void CheckGraceWarning_At580Seconds_ShowsWarning()
+    public void CheckGraceWarning_At570Seconds_ShowsWarning()
     {
         // Arrange
         var sut = new ReminderScheduler(_logger, _dndService);
         var eventFired = false;
         sut.GraceWarningDue += (s, e) => eventFired = true;
 
-        // Act - Grace warning at 580s (20s before 600s break)
-        sut.CheckGraceWarning(idleSeconds: 580, isActive: true);
+        // Act - Grace warning at 570s (30s before 600s break)
+        sut.CheckGraceWarning(idleSeconds: 570, isActive: true);
 
         // Assert
-        Assert.True(eventFired, "Grace warning should fire at 580 seconds");
+        Assert.True(eventFired, "Grace warning should fire at 570 seconds");
     }
 
     [Fact]
-    public void CheckGraceWarning_Before580Seconds_NoWarning()
+    public void CheckGraceWarning_Before570Seconds_NoWarning()
     {
         // Arrange
         var sut = new ReminderScheduler(_logger, _dndService);
@@ -93,10 +93,10 @@ public class ReminderSchedulerTests
         sut.GraceWarningDue += (s, e) => eventFired = true;
 
         // Act
-        sut.CheckGraceWarning(idleSeconds: 579, isActive: true);
+        sut.CheckGraceWarning(idleSeconds: 569, isActive: true);
 
         // Assert
-        Assert.False(eventFired, "Grace warning should NOT fire before 580 seconds");
+        Assert.False(eventFired, "Grace warning should NOT fire before 570 seconds");
     }
 
     [Fact]
@@ -123,8 +123,8 @@ public class ReminderSchedulerTests
         sut.GraceWarningDue += (s, e) => eventCount++;
 
         // Act
-        sut.CheckGraceWarning(idleSeconds: 580, isActive: true); // First time
-        sut.CheckGraceWarning(idleSeconds: 580, isActive: true); // Second time
+        sut.CheckGraceWarning(idleSeconds: 570, isActive: true); // First time
+        sut.CheckGraceWarning(idleSeconds: 570, isActive: true); // Second time
 
         // Assert
         Assert.Equal(1, eventCount);
@@ -135,13 +135,13 @@ public class ReminderSchedulerTests
     {
         // Arrange
         var sut = new ReminderScheduler(_logger, _dndService);
-        sut.CheckGraceWarning(idleSeconds: 580, isActive: true); // Show grace warning
+        sut.CheckGraceWarning(idleSeconds: 570, isActive: true); // Show grace warning
         var eventCount = 0;
         sut.GraceWarningDue += (s, e) => eventCount++;
 
         // Act
         sut.ResetGraceBalloon(); // User became active again
-        sut.CheckGraceWarning(idleSeconds: 580, isActive: true); // Check again
+        sut.CheckGraceWarning(idleSeconds: 570, isActive: true); // Check again
 
         // Assert
         Assert.Equal(1, eventCount); // Grace warning should fire again after reset

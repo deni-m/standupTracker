@@ -13,6 +13,7 @@
 - 🖱️ **Activity Tracking** - Monitors keyboard and mouse activity to determine active work time
 - 📊 **Window Logging** - Records active window (process name + window title, including browser tabs)
 - 📝 **Daily CSV Logs** - Automatically logs activity to `%LOCALAPPDATA%\StandUpTracker\logs\YYYY-MM-DD.csv`
+- 📈 **Work/Break Reports** - Beautiful HTML reports with visual timeline (see [ReportGenerator](ReportGenerator/))
 - 🎯 **State Machine** - Intelligent state management (Idle, Active, Locked, Paused)
 - 🔕 **Do Not Disturb Mode** - Automatically mutes notifications during:
   - Fullscreen applications

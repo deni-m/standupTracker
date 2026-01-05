@@ -159,7 +159,7 @@ namespace StandUpTracker.Services
                 }
 
                 // Handle idle state (check if user has been idle long enough for a break)
-                if (idleSeconds >= AppSettings.ResetIdleSeconds)
+                if (idleSeconds >= AppSettings.ResetIdleMinutes * 60)
                 {
                     return HandleIdleTimeout(idleSeconds);
                 }
@@ -244,7 +244,7 @@ namespace StandUpTracker.Services
 
             var oldState = _currentState;
             _logger.Info("STATE", "State change: Active -> Idle (idle for {0}s, threshold {1}s)",
-                idleSeconds, AppSettings.ResetIdleSeconds);
+                idleSeconds, AppSettings.ResetIdleMinutes * 60);
 
             var duration = DateTime.Now - _activeStart;
             OnBreakStarted(duration);

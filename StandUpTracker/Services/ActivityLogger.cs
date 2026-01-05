@@ -11,13 +11,13 @@ namespace StandUpTracker.Services
     {
         private readonly Dictionary<string, TimeSpan> _totalsToday = new();
 
-        // ➜ керуємо активною датою файлу
+        // ➜ manage active file date
         private DateTime _currentDate = DateTime.Now.Date;
 
-        // ➜ накопичувач активного часу за день (у секундах)
+        // ➜ accumulator for active time per day (in seconds)
         private int _totalActiveSecToday = 0;
 
-        // ➜ чи відкрита "сесія" зараз (між SESSION_START і BREAK_START/SESSION_END)
+        // ➜ whether a "session" is currently open (between SESSION_START and BREAK_START/SESSION_END)
         private bool _sessionOpen = false;
 
         private string CurrentCsvPath =>
@@ -40,12 +40,12 @@ namespace StandUpTracker.Services
             }
         }
 
-        // ➜ Ротація файлу при зміні дати (опівночі)
+        // ➜ File rotation on date change (at midnight)
         private void RotateIfNeeded(DateTime now)
         {
             if (now.Date != _currentDate)
             {
-                // Закриваємо вчорашній день
+                // Close yesterday's day
                 if (_sessionOpen)
                 {
                     WriteEvent(now, "SESSION_END");
@@ -53,7 +53,7 @@ namespace StandUpTracker.Services
                 }
                 WriteDailyTotalLine();
 
-                // Переходимо на новий день
+                // Move to new day
                 _currentDate = now.Date;
                 _totalsToday.Clear();
                 _totalActiveSecToday = 0;
@@ -61,7 +61,7 @@ namespace StandUpTracker.Services
             }
         }
 
-        // ➜ Запис активності вікна
+        // ➜ Log window activity
         public void Append(ActiveSample s)
         {
             RotateIfNeeded(DateTime.Now);
@@ -83,7 +83,7 @@ namespace StandUpTracker.Services
             _totalActiveSecToday += (int)dur.TotalSeconds;
         }
 
-        // ➜ Маркери сесій/перерв
+        // ➜ Session/break markers
         public void LogSessionStart()
         {
             RotateIfNeeded(DateTime.Now);
@@ -104,7 +104,7 @@ namespace StandUpTracker.Services
             }
         }
 
-        // ➜ В кінці дня/при виході закриваємо сесію і пишемо підсумок
+        // ➜ At end of day/exit, close session and write summary
         public void LogSessionEndAndDailyTotal()
         {
             RotateIfNeeded(DateTime.Now);

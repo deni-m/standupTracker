@@ -177,7 +177,7 @@ namespace StandUpTracker.Services
         {
             return _stateMachine.CurrentState switch
             {
-                AppState.Paused => "StandUp: пауза",
+                AppState.Paused => "StandUp: Paused",
                 AppState.Idle or AppState.Locked => "StandUp: —",
                 AppState.Active => $"StandUp: {(DateTime.Now - _stateMachine.ActiveStart):hh\\:mm\\:ss}",
                 _ => "StandUp: —"
@@ -242,7 +242,7 @@ namespace StandUpTracker.Services
 
             // Check if active work window should prevent idle
             bool preventIdleForActiveWork = false;
-            if (idleSeconds >= AppSettings.ResetIdleSeconds && _stateMachine.CurrentState == AppState.Active)
+            if (idleSeconds >= AppSettings.ResetIdleMinutes * 60 && _stateMachine.CurrentState == AppState.Active)
             {
                 preventIdleForActiveWork = _stateMachine.ShouldPreventIdleForActiveWork(_currentSample);
                 if (preventIdleForActiveWork)
@@ -405,7 +405,7 @@ namespace StandUpTracker.Services
         private void ValidateSettings()
         {
             _serviceLogger.Info("CONFIG", "Validating settings...");
-            _serviceLogger.Debug("CONFIG", "ResetIdleSeconds: {0}", AppSettings.ResetIdleSeconds);
+            _serviceLogger.Debug("CONFIG", "ResetIdleMinutes: {0} ({1}s)", AppSettings.ResetIdleMinutes, AppSettings.ResetIdleMinutes * 60);
             _serviceLogger.Debug("CONFIG", "BreakAfterMinutes: {0}", AppSettings.BreakAfterMinutes);
             _serviceLogger.Debug("CONFIG", "GraceBeforeBreakSeconds: {0}", AppSettings.GraceBeforeBreakSeconds);
             _serviceLogger.Debug("CONFIG", "ReminderRepeatMinutes: {0}", AppSettings.ReminderRepeatMinutes);

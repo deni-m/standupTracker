@@ -104,12 +104,12 @@ namespace StandUpTracker.Services
             if (_graceBalloonShown) return;
 
             var graceStart = CalculateGraceStart();
-            if (idleSeconds < graceStart || idleSeconds >= AppSettings.ResetIdleSeconds) return;
+            if (idleSeconds < graceStart || idleSeconds >= AppSettings.ResetIdleMinutes * 60) return;
 
-            var secondsUntilBreak = AppSettings.ResetIdleSeconds - idleSeconds;
+            var secondsUntilBreak = (AppSettings.ResetIdleMinutes * 60) - idleSeconds;
 
             _logger.Info("GRACE", "Grace balloon conditions met - Idle: {0}s, Grace start: {1}s, Reset threshold: {2}s",
-                idleSeconds, graceStart, AppSettings.ResetIdleSeconds);
+                idleSeconds, graceStart, AppSettings.ResetIdleMinutes * 60);
 
             var (isMuted, muteReason) = CheckMuteStatus();
 
@@ -169,7 +169,7 @@ namespace StandUpTracker.Services
 
         private int CalculateGraceStart()
         {
-            return Math.Max(5, Math.Max(1, AppSettings.ResetIdleSeconds - AppSettings.GraceBeforeBreakSeconds));
+            return Math.Max(5, Math.Max(1, (AppSettings.ResetIdleMinutes * 60) - AppSettings.GraceBeforeBreakSeconds));
         }
 
         private void OnReminderDue(TimeSpan sessionDuration, bool isMuted, string muteReason)
