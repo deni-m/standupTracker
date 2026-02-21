@@ -20,11 +20,11 @@ Write-Host "  Python: $PythonExe"
 Write-Host "  Script: $ScriptPath"
 Write-Host ""
 
-# Define the action
-$Action = New-ScheduledTaskAction -Execute $PythonExe -Argument "`"$ScriptPath`" --no-open" -WorkingDirectory $PSScriptRoot
+# Define the action (generate previous day's report)
+$Action = New-ScheduledTaskAction -Execute $PythonExe -Argument "`"$ScriptPath`" --yesterday --no-open" -WorkingDirectory $PSScriptRoot
 
-# Define the trigger (daily at 11:59 PM)
-$Trigger = New-ScheduledTaskTrigger -Daily -At "23:59"
+# Define the trigger (daily at 9:00 AM)
+$Trigger = New-ScheduledTaskTrigger -Daily -At "09:00"
 
 # Define settings
 $Settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable
@@ -35,7 +35,7 @@ try {
     
     Write-Host "✓ Task created successfully!" -ForegroundColor Green
     Write-Host ""
-    Write-Host "The task will run daily at 11:59 PM to generate your work/break report." -ForegroundColor Cyan
+    Write-Host "The task will run daily at 9:00 AM to generate yesterday's work/break report." -ForegroundColor Cyan
     Write-Host "You can customize the schedule in Task Scheduler (taskschd.msc)." -ForegroundColor Cyan
     Write-Host ""
     Write-Host "To test now, run:" -ForegroundColor Yellow

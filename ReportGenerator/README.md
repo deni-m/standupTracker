@@ -54,13 +54,15 @@ To automatically generate daily reports:
 1. Open **Task Scheduler** (Win + R → `taskschd.msc`)
 2. Click **Create Basic Task**
 3. Name: "Daily StandUp Report"
-4. Trigger: Daily, 11:59 PM
+4. Trigger: Daily, 9:00 AM
 5. Action: Start a program
    - Program: `pythonw.exe` (or full path: `C:\Python3X\pythonw.exe`)
-   - Arguments: `"C:\epam\standupTracker\ReportGenerator\report_generator.py" --no-open`
+  - Arguments: `"C:\epam\standupTracker\ReportGenerator\report_generator.py" --yesterday --no-open`
    - Start in: `C:\epam\standupTracker\ReportGenerator`
 
 > **Note**: Use `pythonw.exe` to run silently without a console window.
+
+Recommended schedule: **Daily at 9:00 AM** to generate the report for the previous day.
 
 ## Report Format
 
