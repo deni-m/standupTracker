@@ -11,8 +11,8 @@ namespace StandUpTracker.Services
     {
         private readonly Dictionary<string, TimeSpan> _totalsToday = new();
 
-        // ➜ manage active file date
-        private DateTime _currentDate = DateTime.Now.Date;
+        // ➜ manage active file date (shifed by 3 hours: 3 AM is the new "midnight")
+        private DateTime _currentDate = DateTime.Now.AddHours(-3).Date;
 
         // ➜ accumulator for active time per day (in seconds)
         private int _totalActiveSecToday = 0;
@@ -40,10 +40,13 @@ namespace StandUpTracker.Services
             }
         }
 
-        // ➜ File rotation on date change (at midnight)
+        // ➜ File rotation on date change (at 3 AM)
         private void RotateIfNeeded(DateTime now)
         {
-            if (now.Date != _currentDate)
+            // Effective date is "yesterday" if it's before 3 AM
+            var effectiveDate = now.AddHours(-3).Date;
+
+            if (effectiveDate != _currentDate)
             {
                 // Close yesterday's day
                 if (_sessionOpen)
@@ -54,7 +57,7 @@ namespace StandUpTracker.Services
                 WriteDailyTotalLine();
 
                 // Move to new day
-                _currentDate = now.Date;
+                _currentDate = effectiveDate;
                 _totalsToday.Clear();
                 _totalActiveSecToday = 0;
                 EnsureHeader();

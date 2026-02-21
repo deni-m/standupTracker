@@ -141,6 +141,9 @@ namespace StandUpTracker.UI
             
             reportsMenu.DropDownItems.Add("View Today's Report", null, (s, e) => GenerateReport(DateTime.Now));
             reportsMenu.DropDownItems.Add("View Yesterday's Report", null, (s, e) => GenerateReport(DateTime.Now.AddDays(-1)));
+            reportsMenu.DropDownItems.Add(new ToolStripSeparator());
+            reportsMenu.DropDownItems.Add("View This Week's Report", null, (s, e) => GenerateWeeklyReport(false));
+            reportsMenu.DropDownItems.Add("View Last Week's Report", null, (s, e) => GenerateWeeklyReport(true));
 
             return reportsMenu;
         }
@@ -342,6 +345,133 @@ namespace StandUpTracker.UI
             {
                 MessageBox.Show(
                     $"Failed to generate report: {ex.Message}",
+                    "Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+        }
+
+        private void GenerateWeeklyReport(bool lastWeek)
+        {
+            try
+            {
+                // Find Python executable
+                string pythonExe = FindPythonExecutable();
+                if (string.IsNullOrEmpty(pythonExe))
+                {
+                    MessageBox.Show(
+                        "Python not found. Please install Python 3.8+ and ensure it's in your PATH.",
+                        "Python Not Found",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
+                    return;
+                }
+                
+                // Find the report generator script
+                string exeDir = AppDomain.CurrentDomain.BaseDirectory;
+                
+                // Try primary path (from bin/Debug/net8.0-windows/win-x64)
+                string scriptPath = System.IO.Path.Combine(
+                    exeDir, "..", "..", "..", "..", "..", "ReportGenerator", "report_generator.py");
+                
+                // Normalize path
+                scriptPath = System.IO.Path.GetFullPath(scriptPath);
+
+                if (!System.IO.File.Exists(scriptPath))
+                {
+                    // Try alternative path (for development)
+                    var altPath = System.IO.Path.Combine(
+                        exeDir, 
+                        "..", "..", "..", "..", "ReportGenerator", "report_generator.py");
+                    scriptPath = System.IO.Path.GetFullPath(altPath);
+                }
+
+                if (!System.IO.File.Exists(scriptPath))
+                {
+                    MessageBox.Show(
+                        $"Report generator script not found.\n\nExpected location:\n{scriptPath}\n\n" +
+                        "Please ensure the ReportGenerator folder is in the repository.",
+                        "Script Not Found",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                    return;
+                }
+                
+                // Run the report generator with --week or --last-week flag
+                var psi = new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = pythonExe,
+                    Arguments = $"\"{scriptPath}\" {(lastWeek ? "--last-week" : "--week")} --no-open",
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    CreateNoWindow = true
+                };
+                
+                using (var process = System.Diagnostics.Process.Start(psi))
+                {
+                    if (process == null)
+                    {
+                        MessageBox.Show("Failed to start Python process", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return;
+                    }
+                    
+                    process.WaitForExit();
+                    
+                    string output = process.StandardOutput.ReadToEnd();
+                    string errors = process.StandardError.ReadToEnd();
+                    
+                    if (process.ExitCode == 0)
+                    {
+                        // Calculate Monday of target week
+                        DateTime today = DateTime.Now.Date;
+                        int daysSinceMonday = ((int)today.DayOfWeek + 6) % 7;
+                        DateTime thisMonday = today.AddDays(-daysSinceMonday);
+                        DateTime targetMonday = lastWeek ? thisMonday.AddDays(-7) : thisMonday;
+                        
+                        // Find the weekly HTML report file
+                        string reportsFolder = System.IO.Path.Combine(
+                            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                            "StandUpTracker",
+                            "reports");
+                        
+                        string htmlFile = System.IO.Path.Combine(
+                            reportsFolder,
+                            $"weekly_report_{targetMonday:yyyy-MM-dd}.html");
+                        
+                        // Open the HTML report in default browser
+                        if (System.IO.File.Exists(htmlFile))
+                        {
+                            var openPsi = new System.Diagnostics.ProcessStartInfo
+                            {
+                                FileName = htmlFile,
+                                UseShellExecute = true
+                            };
+                            System.Diagnostics.Process.Start(openPsi);
+                        }
+                        else
+                        {
+                            MessageBox.Show(
+                                $"Report generated but file not found:\n{htmlFile}\n\nOutput:\n{output}",
+                                "Report File Not Found",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Warning);
+                        }
+                    }
+                    else
+                    {
+                        MessageBox.Show(
+                            $"Weekly report generation failed.\n\nError:\n{errors}\n\nOutput:\n{output}",
+                            "Report Generation Failed",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Error);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Failed to generate weekly report: {ex.Message}",
                     "Error",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
