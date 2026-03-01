@@ -1,0 +1,29 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^python -c \"from pathlib import Path; from datetime import datetime; import importlib\\.util; p=Path\\(r'c:\\\\epam\\\\standupTracker\\\\ReportGenerator\\\\report_generator\\.py'\\); spec=importlib\\.util\\.spec_from_file_location\\('rg', str\\(p\\)\\); m=importlib\\.util\\.module_from_spec\\(spec\\); spec\\.loader\\.exec_module\\(m\\); r=m\\.ActivityReport\\(Path\\(r'c:\\\\Users\\\\Denys_Belozerskiy\\\\AppData\\\\Local\\\\StandUpTracker\\\\logs'\\)\\); d=r\\.parse_log\\(datetime\\.strptime\\('2026-02-20','%Y-%m-%d'\\)\\); print\\('start', d\\['start_time'\\]\\); print\\('end', d\\['end_time'\\]\\); print\\('work', d\\['total_work_seconds'\\], r\\.format_duration\\(d\\['total_work_seconds'\\]\\)\\); print\\('break', d\\['total_break_seconds'\\], r\\.format_duration\\(d\\['total_break_seconds'\\]\\)\\); print\\('periods', len\\(d\\['periods'\\]\\)\\); \\[print\\(i, p\\[0\\], p\\[1\\], p\\[2\\], int\\(\\(p\\[1\\]-p\\[0\\]\\)\\.total_seconds\\(\\)\\)\\) for i,p in enumerate\\(d\\['periods'\\]\\[-12:\\]\\)\\];\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^python -c \"from pathlib import Path; from datetime import datetime, timedelta, time; import importlib\\.util; p=Path\\(r'c:\\\\epam\\\\standupTracker\\\\ReportGenerator\\\\report_generator\\.py'\\); spec=importlib\\.util\\.spec_from_file_location\\('rg', str\\(p\\)\\); m=importlib\\.util\\.module_from_spec\\(spec\\); spec\\.loader\\.exec_module\\(m\\); r=m\\.ActivityReport\\(Path\\(r'c:\\\\Users\\\\Denys_Belozerskiy\\\\AppData\\\\Local\\\\StandUpTracker\\\\logs'\\)\\); d=r\\.parse_log\\(datetime\\.strptime\\('2026-02-20','%Y-%m-%d'\\)\\); print\\('start', d\\['start_time'\\]\\); print\\('end', d\\['end_time'\\]\\); print\\('work', d\\['total_work_seconds'\\], r\\.format_duration\\(d\\['total_work_seconds'\\]\\)\\); print\\('break', d\\['total_break_seconds'\\], r\\.format_duration\\(d\\['total_break_seconds'\\]\\)\\); bad=\\[p for p in d\\['periods'\\] if p\\[1\\]<=p\\[0\\]\\]; print\\('invalid_periods', len\\(bad\\)\\); day=datetime\\.strptime\\('2026-02-20','%Y-%m-%d'\\); ds=datetime\\.combine\\(day\\.date\\(\\), time\\.min\\); de=ds\\+timedelta\\(days=1\\); timeline=\\[\\]; \nfor s,e,t in d\\['periods'\\]:\n cs=max\\(s,ds\\); ce=min\\(e,de\\);\n if ce<=cs: continue\n if t=='break' and \\(ce-cs\\)\\.total_seconds\\(\\)>=4\\*3600: continue\n timeline\\.append\\(\\(cs,ce,t\\)\\);\nprint\\('timeline_periods', len\\(timeline\\)\\);\nprint\\('timeline_tail', timeline\\[-5:\\]\\)\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^python c:\\\\epam\\\\standupTracker\\\\ReportGenerator\\\\report_generator\\.py --date 2026-02-20$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^python -c \"from pathlib import Path; from datetime import datetime,timedelta,time; import importlib\\.util; p=Path\\(r'c:\\\\epam\\\\standupTracker\\\\ReportGenerator\\\\report_generator\\.py'\\); spec=importlib\\.util\\.spec_from_file_location\\('rg', str\\(p\\)\\); m=importlib\\.util\\.module_from_spec\\(spec\\); spec\\.loader\\.exec_module\\(m\\); r=m\\.ActivityReport\\(Path\\(r'c:\\\\Users\\\\Denys_Belozerskiy\\\\AppData\\\\Local\\\\StandUpTracker\\\\logs'\\)\\); d=r\\.parse_log\\(datetime\\.strptime\\('2026-02-20','%Y-%m-%d'\\)\\); ws=datetime\\.combine\\(d\\['date'\\]\\.date\\(\\), time\\(hour=3\\)\\); we=ws\\+timedelta\\(days=1\\); out=\\[\\]\nfor s,e,t in d\\['periods'\\]:\n cs=max\\(s,ws\\); ce=min\\(e,we\\)\n if ce<=cs: continue\n if t=='break' and \\(ce-cs\\)\\.total_seconds\\(\\)>=4\\*3600: continue\n sm=\\(cs-ws\\)\\.total_seconds\\(\\)/60; em=\\(ce-ws\\)\\.total_seconds\\(\\)/60\n if cs\\.hour in \\(23,0,1,2\\) or ce\\.hour in \\(23,0,1,2\\):\n  out\\.append\\(\\(cs,ce,t,round\\(sm,2\\),round\\(em,2\\)\\)\\)\nprint\\('late-night-segments:', len\\(out\\)\\);\nfor x in out: print\\(x\\)\n\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "Get-Command": true,
+        "/^& 'C:\\\\Program Files \\(x86\\)\\\\Microsoft\\\\Edge\\\\Application\\\\msedge\\.exe' --headless --disable-gpu --window-size=1600,900 --screenshot=C:\\\\Users\\\\Denys_Belozerskiy\\\\AppData\\\\Local\\\\StandUpTracker\\\\reports\\\\report_2026-02-20\\.edge\\.png file:///C:/Users/Denys_Belozerskiy/AppData/Local/StandUpTracker/reports/report_2026-02-20\\.html; Test-Path C:\\\\Users\\\\Denys_Belozerskiy\\\\AppData\\\\Local\\\\StandUpTracker\\\\reports\\\\report_2026-02-20\\.edge\\.png$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^python -c \"from PIL import Image; import colorsys; p=r'C:\\\\Users\\\\Denys_Belozerskiy\\\\AppData\\\\Local\\\\StandUpTracker\\\\reports\\\\report_2026-02-20\\.edge\\.png'; im=Image\\.open\\(p\\)\\.convert\\('RGB'\\); w,h=im\\.size; pix=im\\.load\\(\\);\ndef is_seg\\(r,g,b\\):\n h,s,v=colorsys\\.rgb_to_hsv\\(r/255,g/255,b/255\\)\n deg=h\\*360\n return v>0\\.35 and s>0\\.35 and \\(\\(95<=deg<=150\\) or \\(30<=deg<=55\\)\\)\nbest=\\(0,0\\)\nfor y in range\\(h\\):\n c=0\n for x in range\\(w\\):\n  if is_seg\\(\\*pix\\[x,y\\]\\): c\\+=1\n if c>best\\[1\\]: best=\\(y,c\\)\nprint\\('best_row',best\\)\nrow=best\\[0\\]\nfor yy in range\\(max\\(0,row-5\\), min\\(h,row\\+6\\)\\):\n c=sum\\(1 for x in range\\(w\\) if is_seg\\(\\*pix\\[x,yy\\]\\)\\)\n print\\('row',yy,'count',c\\)\n# runs on best row\nruns=\\[\\]; in_run=False\nfor x in range\\(w\\):\n col=is_seg\\(\\*pix\\[x,row\\]\\)\n if col and not in_run: st=x; in_run=True\n if not col and in_run: runs\\.append\\(\\(st,x-1\\)\\); in_run=False\nif in_run: runs\\.append\\(\\(st,w-1\\)\\)\nprint\\('runs',runs\\)\n\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}

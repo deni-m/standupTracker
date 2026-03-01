@@ -270,6 +270,23 @@ class ActivityReport:
                  
                  total_day_seconds = (last_activity - first_activity).total_seconds()
                  total_break_seconds = max(0, int(total_day_seconds - total_work_seconds))
+
+        # Reconcile app totals with total work time.
+        # App stats are based on flushed window samples, while total work time may include
+        # still-open active work that has not been flushed to CSV yet.
+        total_app_seconds = sum(app_data['total'] for app_data in app_stats.values())
+        unattributed_seconds = max(0, total_work_seconds - total_app_seconds)
+        if unattributed_seconds > 0:
+            unattributed_key = 'Unattributed active time'
+            if unattributed_key not in app_stats:
+                app_stats[unattributed_key] = {'total': 0, 'windows': {}}
+            app_stats[unattributed_key]['total'] += unattributed_seconds
+
+            # Use a synthetic window title to make the source of this time explicit in UI.
+            note_title = 'Open active window (not flushed to log yet)'
+            if note_title not in app_stats[unattributed_key]['windows']:
+                app_stats[unattributed_key]['windows'][note_title] = 0
+            app_stats[unattributed_key]['windows'][note_title] += unattributed_seconds
         
         return {
             'date': date,
