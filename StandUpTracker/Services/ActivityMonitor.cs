@@ -69,6 +69,11 @@ namespace StandUpTracker.Services
         public event EventHandler<GraceWarningEventArgs>? GraceWarningDue;
 
         /// <summary>
+        /// Fires when an aggressive reminder is due after long continuous work.
+        /// </summary>
+        public event EventHandler<ReminderEventArgs>? AnnoyingReminderDue;
+
+        /// <summary>
         /// Fires when the tray tooltip should be updated.
         /// </summary>
         public event EventHandler<TooltipUpdateEventArgs>? TooltipUpdateRequired;
@@ -114,6 +119,7 @@ namespace StandUpTracker.Services
             _reminderScheduler = new ReminderScheduler(_serviceLogger, dndService);
             _reminderScheduler.ReminderDue += OnReminderDue;
             _reminderScheduler.GraceWarningDue += OnGraceWarningDue;
+            _reminderScheduler.AnnoyingReminderDue += OnAnnoyingReminderDue;
 
             // Initialize timer
             _timer = new System.Timers.Timer(AppSettings.TickSeconds * 1000)
@@ -354,6 +360,11 @@ namespace StandUpTracker.Services
             {
                 _stateMachine.OnReminderShown();
             }
+
+            if (_reminderScheduler.CheckAnnoyingReminder(_stateMachine.ActiveStart, _stateMachine.NextAnnoyingReminderAt))
+            {
+                _stateMachine.OnAnnoyingReminderShown();
+            }
         }
 
         #endregion
@@ -390,6 +401,11 @@ namespace StandUpTracker.Services
         private void OnGraceWarningDue(object? sender, GraceWarningEventArgs e)
         {
             GraceWarningDue?.Invoke(this, e);
+        }
+
+        private void OnAnnoyingReminderDue(object? sender, ReminderEventArgs e)
+        {
+            AnnoyingReminderDue?.Invoke(this, e);
         }
 
         #endregion
@@ -441,6 +457,7 @@ namespace StandUpTracker.Services
 
                 _reminderScheduler.ReminderDue -= OnReminderDue;
                 _reminderScheduler.GraceWarningDue -= OnGraceWarningDue;
+                _reminderScheduler.AnnoyingReminderDue -= OnAnnoyingReminderDue;
             }
 
             _disposed = true;

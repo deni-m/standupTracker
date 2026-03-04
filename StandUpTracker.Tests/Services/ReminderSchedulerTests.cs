@@ -69,6 +69,47 @@ public class ReminderSchedulerTests
         Assert.NotNull(wasMuted);
     }
 
+
+
+    [Fact]
+    public void CheckAnnoyingReminder_Before120Min_ReturnsFalse()
+    {
+        // Arrange
+        var sut = new ReminderScheduler(_logger, _dndService);
+        var activeStart = DateTime.Now.AddMinutes(-119);
+        var nextAnnoyingReminderAt = activeStart.AddMinutes(120);
+
+        // Act
+        var result = sut.CheckAnnoyingReminder(activeStart, nextAnnoyingReminderAt);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void CheckAnnoyingReminder_After120Min_FiresAnnoyingReminderDueEvent()
+    {
+        // Arrange
+        var sut = new ReminderScheduler(_logger, _dndService);
+        var activeStart = DateTime.Now.AddMinutes(-121);
+        var nextAnnoyingReminderAt = activeStart.AddMinutes(120);
+        var eventFired = false;
+        bool? wasMuted = null;
+        sut.AnnoyingReminderDue += (s, e) =>
+        {
+            eventFired = true;
+            wasMuted = e.IsMuted;
+        };
+
+        // Act
+        var result = sut.CheckAnnoyingReminder(activeStart, nextAnnoyingReminderAt);
+
+        // Assert
+        Assert.True(result);
+        Assert.True(eventFired);
+        Assert.NotNull(wasMuted);
+    }
+
     [Fact]
     public void CheckGraceWarning_At570Seconds_ShowsWarning()
     {

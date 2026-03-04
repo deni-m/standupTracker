@@ -163,6 +163,40 @@ public class SessionStateMachineTests
         Assert.Equal(activeStartBefore, activeStartAfter);
     }
 
+
+
+    [Fact]
+    public void BreakTaken_ResetsAnnoyingReminderSchedule()
+    {
+        // Arrange
+        var sut = new SessionStateMachine(_logger);
+        sut.ProcessTick(idleSeconds: 0, isSessionLocked: false); // Active
+        var nextAnnoyingBefore = sut.NextAnnoyingReminderAt;
+        sut.ProcessTick(idleSeconds: 600, isSessionLocked: false); // Idle (break >= 600s)
+
+        // Act
+        sut.ProcessTick(idleSeconds: 0, isSessionLocked: false); // Back to Active after break
+        var nextAnnoyingAfter = sut.NextAnnoyingReminderAt;
+
+        // Assert
+        Assert.NotEqual(nextAnnoyingBefore, nextAnnoyingAfter);
+        Assert.True(nextAnnoyingAfter > DateTime.Now.AddMinutes(55));
+    }
+
+    [Fact]
+    public void OnAnnoyingReminderShown_SchedulesNextAnnoyingReminder()
+    {
+        // Arrange
+        var sut = new SessionStateMachine(_logger);
+        sut.ProcessTick(idleSeconds: 0, isSessionLocked: false); // Active
+
+        // Act
+        sut.OnAnnoyingReminderShown();
+
+        // Assert
+        Assert.True(sut.NextAnnoyingReminderAt <= DateTime.Now.AddMinutes(2));
+    }
+
     [Fact]
     public void SetPaused_TransitionsToPaused()
     {

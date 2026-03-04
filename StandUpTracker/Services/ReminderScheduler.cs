@@ -57,6 +57,11 @@ namespace StandUpTracker.Services
         /// </summary>
         public event EventHandler<GraceWarningEventArgs>? GraceWarningDue;
 
+        /// <summary>
+        /// Fires when an aggressive reminder should be shown after long continuous work.
+        /// </summary>
+        public event EventHandler<ReminderEventArgs>? AnnoyingReminderDue;
+
         public ReminderScheduler(ServiceLogger logger, DoNotDisturbService dnd)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -90,6 +95,36 @@ namespace StandUpTracker.Services
             }
 
             OnReminderDue(sessionDuration, isMuted, muteReason);
+            return true;
+        }
+
+        /// <summary>
+        /// Checks if an aggressive reminder should be shown and fires the appropriate event.
+        /// </summary>
+        /// <param name="activeStart">When the current active session started.</param>
+        /// <param name="nextAnnoyingReminderAt">When the next aggressive reminder is scheduled.</param>
+        /// <returns>True if an aggressive reminder was triggered.</returns>
+        public bool CheckAnnoyingReminder(DateTime activeStart, DateTime nextAnnoyingReminderAt)
+        {
+            var now = DateTime.Now;
+            if (now < nextAnnoyingReminderAt) return false;
+
+            var sessionDuration = now - activeStart;
+            _logger.Warning("REMINDER", "Aggressive reminder time reached - Session duration: {0}",
+                sessionDuration.ToString(@"hh\:mm\:ss"));
+
+            var (isMuted, muteReason) = CheckMuteStatus();
+
+            if (isMuted)
+            {
+                _logger.Info("REMINDER", "Aggressive reminder muted - {0}", muteReason);
+            }
+            else
+            {
+                _logger.Warning("REMINDER", "Showing aggressive stand-up reminder");
+            }
+
+            OnAnnoyingReminderDue(sessionDuration, isMuted, muteReason);
             return true;
         }
 
@@ -180,6 +215,11 @@ namespace StandUpTracker.Services
         private void OnGraceWarningDue(int idleSeconds, int secondsUntilBreak, bool isMuted)
         {
             GraceWarningDue?.Invoke(this, new GraceWarningEventArgs(idleSeconds, secondsUntilBreak, isMuted));
+        }
+
+        private void OnAnnoyingReminderDue(TimeSpan sessionDuration, bool isMuted, string muteReason)
+        {
+            AnnoyingReminderDue?.Invoke(this, new ReminderEventArgs(sessionDuration, isMuted, muteReason));
         }
     }
 }

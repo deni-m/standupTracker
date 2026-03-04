@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Windows.Forms;
 using StandUpTracker.Config;
 using StandUpTracker.Services;
@@ -22,6 +23,7 @@ namespace StandUpTracker.UI
         private readonly ActivityMonitor _monitor;
         private readonly PomodoroTimer _pomodoro;
         private readonly NotifyIcon _tray;
+        private OverlayNotificationForm? _overlayNotification;
 
         #endregion
 
@@ -43,6 +45,7 @@ namespace StandUpTracker.UI
             _monitor.StateChanged += OnStateChanged;
             _monitor.ReminderDue += OnReminderDue;
             _monitor.GraceWarningDue += OnGraceWarningDue;
+            _monitor.AnnoyingReminderDue += OnAnnoyingReminderDue;
             _monitor.TooltipUpdateRequired += OnTooltipUpdateRequired;
             _monitor.PauseStateChanged += OnPauseStateChanged;
 
@@ -128,6 +131,17 @@ namespace StandUpTracker.UI
             menu.Items.Add(reportsMenu);
             menu.Items.Add("Open Logs Folder", null, (s, e) => OpenLogsFolder());
             menu.Items.Add("Open Service Logs", null, (s, e) => OpenServiceLogsFolder());
+            menu.Items.Add("Test Notification", null, (s, e) =>
+            {
+                var delayed = new System.Windows.Forms.Timer { Interval = 150 };
+                delayed.Tick += (sender, args) =>
+                {
+                    delayed.Stop();
+                    delayed.Dispose();
+                    TestNotification();
+                };
+                delayed.Start();
+            });
             menu.Items.Add(pomodoroMenu);
             menu.Items.Add(pauseItem);
             menu.Items.Add("Exit", null, (s, e) => ExitApplication());
@@ -524,6 +538,21 @@ namespace StandUpTracker.UI
             return string.Empty;
         }
 
+        private void TestNotification()
+        {
+            ShowBalloonTip(
+                "Test Notification",
+                "This is a test notification. Current mode: " + AppSettings.ReminderNotificationMode,
+                5000
+            );
+
+            try
+            {
+                Console.Beep(800, 180);
+            }
+            catch { }
+        }
+
         private void ExitApplication()
         {
             Application.Exit();
@@ -538,21 +567,32 @@ namespace StandUpTracker.UI
             // Could add UI feedback for state changes if needed
         }
 
+        private static string FormatSessionDurationForPopup(TimeSpan duration)
+        {
+            if (duration.TotalHours >= 1)
+            {
+                return $"{(int)duration.TotalHours}h {duration.Minutes:D2}m";
+            }
+
+            return $"{duration.Minutes}m";
+        }
+
         private void OnReminderDue(object? sender, ReminderEventArgs e)
         {
             if (e.IsMuted) return;
 
             SafeInvoke(() =>
             {
+                var durationText = FormatSessionDurationForPopup(e.SessionDuration);
                 ShowBalloonTip(
                     "Time to Stand Up",
-                    "2-3 min stretch for your back and eyes 🙂",
-                    4000
+                    $"2-3 min stretch for your back and eyes 🙂\nWithout break: {durationText}",
+                    10000
                 );
 
                 try
                 {
-                    Console.Beep(750, 300);
+                    Console.Beep(750, 700);
                 }
                 catch { }
             });
@@ -569,6 +609,31 @@ namespace StandUpTracker.UI
                     "Move your mouse or press a key to continue the session.",
                     5000
                 );
+            });
+        }
+
+        private void OnAnnoyingReminderDue(object? sender, ReminderEventArgs e)
+        {
+            if (e.IsMuted) return;
+
+            SafeInvoke(() =>
+            {
+                var durationText = FormatSessionDurationForPopup(e.SessionDuration);
+                ShowBalloonTip(
+                    "Break NOW",
+                    $"You have been active for too long. Stand up immediately and walk for 3-5 minutes.\nWithout break: {durationText}",
+                    9000
+                );
+
+                try
+                {
+                    Console.Beep(900, 350);
+                    Thread.Sleep(150);
+                    Console.Beep(900, 350);
+                    Thread.Sleep(150);
+                    Console.Beep(1100, 450);
+                }
+                catch { }
             });
         }
 
@@ -685,13 +750,54 @@ namespace StandUpTracker.UI
 
         private void ShowBalloonTip(string title, string text, int timeout)
         {
+            switch (AppSettings.ReminderNotificationMode)
+            {
+                case NotificationMode.WindowsBalloon:
+                    ShowWindowsBalloonTip(title, text, timeout);
+                    break;
+                case NotificationMode.Both:
+                    ShowWindowsBalloonTip(title, text, timeout);
+                    ShowCustomOverlayTip(title, text, timeout);
+                    break;
+                default:
+                    ShowCustomOverlayTip(title, text, timeout);
+                    break;
+            }
+
+            System.Diagnostics.Debug.WriteLine($"[NOTIFICATION] ({AppSettings.ReminderNotificationMode}) {title}: {text}");
+        }
+
+        private void ShowWindowsBalloonTip(string title, string text, int timeout)
+        {
             _tray.BalloonTipTitle = title;
             _tray.BalloonTipText = text;
             _tray.BalloonTipIcon = ToolTipIcon.Info;
             _tray.ShowBalloonTip(timeout);
-            
-            // Log to help diagnose notification issues
-            System.Diagnostics.Debug.WriteLine($"[NOTIFICATION] {title}: {text}");
+        }
+
+        private void ShowCustomOverlayTip(string title, string text, int timeout)
+        {
+            var previous = _overlayNotification;
+            _overlayNotification = null;
+
+            if (previous != null && !previous.IsDisposed)
+            {
+                previous.Close();
+                previous.Dispose();
+            }
+
+            var next = new OverlayNotificationForm(title, text, timeout);
+            _overlayNotification = next;
+            next.FormClosed += (s, e) =>
+            {
+                if (ReferenceEquals(_overlayNotification, s))
+                {
+                    _overlayNotification = null;
+                }
+            };
+            next.Show();
+            next.BringToFront();
+            next.Refresh();
         }
 
         private void UpdateTrayTooltip(string text)
@@ -736,6 +842,7 @@ namespace StandUpTracker.UI
             _monitor.StateChanged -= OnStateChanged;
             _monitor.ReminderDue -= OnReminderDue;
             _monitor.GraceWarningDue -= OnGraceWarningDue;
+            _monitor.AnnoyingReminderDue -= OnAnnoyingReminderDue;
             _monitor.TooltipUpdateRequired -= OnTooltipUpdateRequired;
             _monitor.PauseStateChanged -= OnPauseStateChanged;
 
@@ -748,6 +855,12 @@ namespace StandUpTracker.UI
 
             // Dispose resources
             _monitor.Dispose();
+            if (_overlayNotification != null && !_overlayNotification.IsDisposed)
+            {
+                _overlayNotification.Close();
+                _overlayNotification.Dispose();
+                _overlayNotification = null;
+            }
             _tray.Visible = false;
             _tray.Dispose();
         }

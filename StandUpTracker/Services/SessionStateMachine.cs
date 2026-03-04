@@ -61,6 +61,7 @@ namespace StandUpTracker.Services
         private bool _breakTaken = false;
         private DateTime _activeStart;
         private DateTime _nextReminderAt;
+        private DateTime _nextAnnoyingReminderAt;
 
         /// <summary>
         /// Fires when the application state changes.
@@ -97,6 +98,11 @@ namespace StandUpTracker.Services
             get { lock (_stateLock) return _nextReminderAt; }
         }
 
+        public DateTime NextAnnoyingReminderAt
+        {
+            get { lock (_stateLock) return _nextAnnoyingReminderAt; }
+        }
+
         public SessionStateMachine(ServiceLogger logger)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -107,8 +113,9 @@ namespace StandUpTracker.Services
         {
             _activeStart = DateTime.Now;
             _nextReminderAt = _activeStart.AddMinutes(AppSettings.BreakAfterMinutes);
-            _logger.Info("STATE", "Initial state set - ActiveStart: {0}, NextReminder: {1}",
-                _activeStart.ToString("HH:mm:ss"), _nextReminderAt.ToString("HH:mm:ss"));
+            _nextAnnoyingReminderAt = _activeStart.AddMinutes(AppSettings.AnnoyingReminderAfterMinutes);
+            _logger.Info("STATE", "Initial state set - ActiveStart: {0}, NextReminder: {1}, NextAnnoyingReminder: {2}",
+                _activeStart.ToString("HH:mm:ss"), _nextReminderAt.ToString("HH:mm:ss"), _nextAnnoyingReminderAt.ToString("HH:mm:ss"));
         }
 
         /// <summary>
@@ -211,6 +218,16 @@ namespace StandUpTracker.Services
             }
         }
 
+        public void OnAnnoyingReminderShown()
+        {
+            lock (_stateLock)
+            {
+                _nextAnnoyingReminderAt = DateTime.Now.AddMinutes(AppSettings.AnnoyingReminderRepeatMinutes);
+                _logger.Info("REMINDER", "Next annoying reminder scheduled for: {0}",
+                    _nextAnnoyingReminderAt.ToString("HH:mm:ss"));
+            }
+        }
+
         private StateTransitionResult HandleLockedSession()
         {
             if (_currentState == AppState.Locked)
@@ -284,8 +301,9 @@ namespace StandUpTracker.Services
             if (resetReminderSchedule)
             {
                 _nextReminderAt = _activeStart.AddMinutes(AppSettings.BreakAfterMinutes);
-                _logger.Info("SESSION", "New active session started - Next reminder at {0}",
-                    _nextReminderAt.ToString("HH:mm:ss"));
+                _nextAnnoyingReminderAt = _activeStart.AddMinutes(AppSettings.AnnoyingReminderAfterMinutes);
+                _logger.Info("SESSION", "New active session started - Next reminder at {0}, next annoying reminder at {1}",
+                    _nextReminderAt.ToString("HH:mm:ss"), _nextAnnoyingReminderAt.ToString("HH:mm:ss"));
             }
             else
             {
